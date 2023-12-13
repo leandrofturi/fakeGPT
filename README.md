@@ -4,7 +4,7 @@ GPT-2 pré-treinada pela OpenAI, disponibilizado por [Karpathy](https://github.c
 
 ## Instalação
 
-Por favor siga o tutorial de instalação disponibilizado por [Karpathy](https://github.com/karpathy/nanoGPT?tab=readme-ov-file#install).  
+Siga o tutorial de instalação disponibilizado por [Karpathy](https://github.com/karpathy/nanoGPT?tab=readme-ov-file#install).  
 Nós utilizamos o Google Colab PRO para realizar o finetuning e inferência do modelo, em uma instância V100.  
 
 Para remoção dos erros de ortografia, instale Enelvo: `pip3 install enelvo`.
