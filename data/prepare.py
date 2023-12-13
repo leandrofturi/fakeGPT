@@ -5,6 +5,7 @@ from tqdm import tqdm
 import numpy as np
 import tiktoken
 from datasets import load_dataset # huggingface datasets
+from enelvo import normaliser
 
 # number of workers in .map() call
 # good number to use is ~order number of cpu cores // 2
@@ -20,6 +21,7 @@ if len(sys.argv) <= 2:
     print('{} <input_file_path> <output_path>'.format(sys.argv[0]))
     sys.exit()
 
+
 if __name__ == '__main__':
     input_file_path = sys.argv[1]
     output_path = sys.argv[2] # 'data/messages'
@@ -30,14 +32,15 @@ if __name__ == '__main__':
         pass
 
     dataset = load_dataset(
-    'csv',
-    data_files={"train" : input_file_path},
-    delimiter=',',
-    column_names=['id','channel_id','date','message'],
-    skiprows=1,
-    num_proc=num_proc_load_dataset
+        'csv',
+        data_files={"train" : input_file_path},
+        sep=',',
+        quotechar='"',
+        column_names=['id','channel_id','date','message'],
+        skiprows=1,
+        num_proc=num_proc_load_dataset
     )
-    print(dataset['train'][0])
+    print(str(dataset['train'][0]) + '\n')
 
     # owt by default only contains the 'train' split, so create a test split
     split_dataset = dataset["train"].train_test_split(test_size=0.1, seed=42, shuffle=True)
@@ -58,17 +61,26 @@ if __name__ == '__main__':
 
     # we now want to tokenize the dataset. first define the encoding function (gpt2 bpe)
     enc = tiktoken.get_encoding("gpt2")
+    # remove usernames, URLs, and non-ASCII special characters (keeping ASCII letters, digits, spaces, and punctuations)
+    regex = r'\@\w+|https?:\/\/\S+|www\S+|[^\w\s\.\,\!\?\:\;\-\'\"]'
+    # remove spelling errors and typical internet language
+    norm = normaliser.Normaliser()
+    norm.capitalize_inis = True
+    
+    print(re.sub(regex, '', str(dataset['train'][0]['message'])) + '\n')
+    
     def process(example):
         if not isinstance(example['message'], str):
             return {'ids': [enc.eot_token], 'len': 1}
-        cleaned = re.sub(r'[^\w\s]|@\w+', '', example['message'])
-        # ids = enc.encode_ordinary(cleaned) # encode_ordinary ignores any special tokens
-        ids = enc.encode(cleaned, allowed_special={"<|endoftext|>"})
+        sentence = re.sub(regex, '', example['message'])
+        if len(sentence) > 3 and sentence.isalnum():
+            sentence = norm.normalise(sentence)
+        ids = enc.encode_ordinary(sentence)
         ids.append(enc.eot_token) # add the end of text token, e.g. 50256 for gpt2 bpe
         # note: I think eot should be prepended not appended... hmm. it's called "eot" though...
         out = {'ids': ids, 'len': len(ids)}
         return out
-
+    
     # tokenize the dataset
     tokenized = split_dataset.map(
         process,
