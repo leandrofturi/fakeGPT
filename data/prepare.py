@@ -43,7 +43,7 @@ if __name__ == '__main__':
     print(str(dataset['train'][0]) + '\n')
 
     # owt by default only contains the 'train' split, so create a test split
-    split_dataset = dataset["train"].train_test_split(test_size=0.1, seed=42, shuffle=True)
+    split_dataset = dataset["train"].train_test_split(test_size=0.1, seed=42, shuffle=False)
     split_dataset['val'] = split_dataset.pop('test') # rename the test split to val
 
     # this results in:
