@@ -16,7 +16,7 @@ As mensagens podem conter caracteres de formatação CSV, o que pode dificultar 
 
 Durante o processo, foram utilizadas bibliotecas como **Enelvo** para normalizar o texto (corrigir erros de ortografia e linguagem típica da internet) e **tiktoken** para realizar a tokenização das mensagens. Durante a tokenização, nomes de usuários, URLs e caracteres especiais foram filtrados.
 
-Você pode baixar as bases de dados em https://drive.google.com/drive/folders/1JpPmDYhXgCGOFF1NNRj04fFqRkEIIYsQ?usp=sharing.
+Você pode baixar as bases de dados em [https://drive.google.com/drive/folders/1JpPmDYhXgCGOFF1NNRj04fFqRkEIIYsQ?usp=sharing.](https://drive.google.com/drive/folders/1eMl3DENPS3-T6MV4AqqH4KJ5k7NdnDlo?usp=sharing)
 
 
 ```bash
