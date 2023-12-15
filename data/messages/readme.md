@@ -2,5 +2,5 @@
 
 After running `pre-prepare.pl` and `prepare.py`:
 
-- train has 109,845,816 tokens
-- val has 12,173,500 tokens
+- train has 114,243,622 tokens
+- val has 7,775,694 tokens
