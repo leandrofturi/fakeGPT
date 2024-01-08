@@ -5,7 +5,7 @@ from tqdm import tqdm
 import numpy as np
 import tiktoken
 from datasets import load_dataset # huggingface datasets
-from enelvo import normaliser
+# from enelvo import normaliser
 
 # number of workers in .map() call
 # good number to use is ~order number of cpu cores // 2
@@ -69,7 +69,7 @@ if __name__ == '__main__':
     regex = r'\@\w+|https?:\/\/\S+|www\S+|[^\w\s\.\,\!\?\:\;\-\'\"]|^[\.\,\!\?\:\;\-\'\"]+$|^\s*$'
 
     # remove spelling errors and typical internet language
-    norm = normaliser.Normaliser(tokenizer='readable')
+    # norm = normaliser.Normaliser(tokenizer='readable')
 
     print(re.sub(regex, '', str(dataset['train'][0]['message'])) + '\n')
 
@@ -79,7 +79,7 @@ if __name__ == '__main__':
         sentence = re.sub(regex, '', example['message']) # clean with regex
         if len(sentence) < 3:
             return {'ids': [enc.eot_token], 'len': 0}
-        sentence = norm.normalise(sentence)
+        # sentence = norm.normalise(sentence)
         ids = enc.encode_ordinary(sentence)
         ids.append(enc.eot_token) # add the end of text token, e.g. 50256 for gpt2 bpe
         # note: I think eot should be prepended not appended... hmm. it's called "eot" though...
