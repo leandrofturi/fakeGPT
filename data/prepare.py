@@ -17,14 +17,17 @@ num_proc = 4
 num_proc_load_dataset = num_proc
 
 
-if len(sys.argv) <= 2:
+if len(sys.argv) <= 1:
     print('{} <input_file_path> <output_path>'.format(sys.argv[0]))
     sys.exit()
 
 
 if __name__ == '__main__':
     input_file_path = sys.argv[1]
-    output_path = sys.argv[2] # 'data/messages'
+    if len(sys.argv) > 2:
+        output_path = sys.argv[2]
+    else:
+        output_path = 'splited'
 
     try:
         os.makedirs(output_path)
@@ -62,25 +65,27 @@ if __name__ == '__main__':
     # we now want to tokenize the dataset. first define the encoding function (gpt2 bpe)
     enc = tiktoken.get_encoding("gpt2")
     # remove usernames, URLs, and non-ASCII special characters (keeping ASCII letters, digits, spaces, and punctuations)
-    regex = r'\@\w+|https?:\/\/\S+|www\S+|[^\w\s\.\,\!\?\:\;\-\'\"]'
+    # regex = r'\@\w+|https?:\/\/\S+|www\S+|[^\w\s\.\,\!\?\:\;\-\'\"]'
+    regex = r'\@\w+|https?:\/\/\S+|www\S+|[^\w\s\.\,\!\?\:\;\-\'\"]|^[\.\,\!\?\:\;\-\'\"]+$|^\s*$'
+
     # remove spelling errors and typical internet language
-    norm = normaliser.Normaliser()
-    norm.capitalize_inis = True
-    
+    norm = normaliser.Normaliser(tokenizer='readable')
+
     print(re.sub(regex, '', str(dataset['train'][0]['message'])) + '\n')
-    
+
     def process(example):
         if not isinstance(example['message'], str):
-            return {'ids': [enc.eot_token], 'len': 1}
-        sentence = re.sub(regex, '', example['message'])
-        if len(sentence) > 3 and sentence.isalnum():
-            sentence = norm.normalise(sentence)
+            return {'ids': [enc.eot_token], 'len': 0}
+        sentence = re.sub(regex, '', example['message']) # clean with regex
+        if len(sentence) < 3:
+            return {'ids': [enc.eot_token], 'len': 0}
+        sentence = norm.normalise(sentence)
         ids = enc.encode_ordinary(sentence)
         ids.append(enc.eot_token) # add the end of text token, e.g. 50256 for gpt2 bpe
         # note: I think eot should be prepended not appended... hmm. it's called "eot" though...
         out = {'ids': ids, 'len': len(ids)}
         return out
-    
+
     # tokenize the dataset
     tokenized = split_dataset.map(
         process,
@@ -101,10 +106,14 @@ if __name__ == '__main__':
         for batch_idx in tqdm(range(total_batches), desc=f'writing {filename}'):
             # Batch together samples for faster write
             batch = dset.shard(num_shards=total_batches, index=batch_idx, contiguous=True).with_format('numpy')
-            arr_batch = np.concatenate(batch['ids'])
+            batch_filtered = batch['ids'][batch['len'] > 0]
+            if len(batch_filtered) == 0:
+                continue
+            arr_batch = np.concatenate(batch_filtered)
+            n = len(arr_batch)
             # Write into mmap
-            arr[idx : idx + len(arr_batch)] = arr_batch
-            idx += len(arr_batch)
+            arr[idx : idx + n] = arr_batch
+            idx += n
         print(f'{split} has {idx:,} tokens\n')
         arr.flush()
 
