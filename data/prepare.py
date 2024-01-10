@@ -1,6 +1,7 @@
 import os
 import re
 import sys
+import glob
 from tqdm import tqdm
 import numpy as np
 import tiktoken
@@ -36,7 +37,7 @@ if __name__ == '__main__':
 
     dataset = load_dataset(
         'csv',
-        data_files={"train" : input_file_path},
+        data_files={"train" : glob.glob(input_file_path)},
         sep=',',
         quotechar='"',
         column_names=['id','channel_id','date','message'],
