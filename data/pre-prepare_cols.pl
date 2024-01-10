@@ -6,7 +6,7 @@ use Text::CSV;
 use File::Basename;
 
 if (@ARGV < 1) {
-    die "usage: pre-prepare.pl <input>\n";
+    die "usage: pre-prepare_cols.pl <input>\n";
 }
 
 my $input = $ARGV[0];
@@ -22,21 +22,14 @@ my $csv = Text::CSV->new({
     escape_char => undef  # Desabilita o escape de caracteres
 });
 
-open(my $rinput, "<:encoding(utf8)", $input) or die "unable to open input: $!";
+open my $rinput, "<:encoding(utf8)", $input or die "unable to open input: $!";
 open(my $routput, ">:encoding(utf8)", $output) or die "unable to open output: $!";
 
 while (my $row = $csv->getline($rinput)) {
-    if (@$row >= 3) {
-        my $col = join(",", @$row[3..$#$row]);
-        $col =~ s/"//g;
-        $row->[3] = "\"" . $col . "\"";
-        # $row->[3] = $col;
-        @$row = @$row[0..3];
-    }
-
-    # Escreve a linha modificada no arquivo de saída
-    $csv->print($routput, $row);
-    print $routput "\n";
+    $row->[-1] = "\"" . $row->[-1] . "\"";
+    my @selected_columns = ($row->[0], $row->[1], $row->[2], $row->[-1]);
+    
+    $csv->print($routput, \@selected_columns);
 }
 
 close $rinput;
