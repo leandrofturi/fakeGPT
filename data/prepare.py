@@ -1,7 +1,6 @@
 import os
 import re
 import sys
-import glob
 from tqdm import tqdm
 import numpy as np
 import tiktoken
@@ -17,7 +16,6 @@ num_proc = 4
 # it is better than 1 usually though
 num_proc_load_dataset = num_proc
 
-
 if len(sys.argv) <= 1:
     print('{} <input_file_path> <output_path>'.format(sys.argv[0]))
     sys.exit()
@@ -28,7 +26,7 @@ if __name__ == '__main__':
     if len(sys.argv) > 2:
         output_path = sys.argv[2]
     else:
-        output_path = 'splited'
+        output_path = 'data/telegram'
 
     try:
         os.makedirs(output_path)
@@ -37,7 +35,7 @@ if __name__ == '__main__':
 
     dataset = load_dataset(
         'csv',
-        data_files={"train" : glob.glob(input_file_path)},
+        data_files={"train" : [input_file_path]},
         sep=',',
         quotechar='"',
         column_names=['id','channel_id','date','message'],
