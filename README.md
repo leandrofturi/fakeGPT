@@ -16,8 +16,6 @@ As mensagens podem conter caracteres de formatação CSV, o que pode dificultar 
 
 Durante o processo, foram utilizadas bibliotecas como **Enelvo** para normalizar o texto (corrigir erros de ortografia e linguagem típica da internet) e **tiktoken** para realizar a tokenização das mensagens. Durante a tokenização, nomes de usuários, URLs e caracteres especiais foram filtrados.
 
-Você pode baixar as bases de dados em [https://drive.google.com/drive/folders/1JpPmDYhXgCGOFF1NNRj04fFqRkEIIYsQ?usp=sharing.](https://drive.google.com/drive/folders/1eMl3DENPS3-T6MV4AqqH4KJ5k7NdnDlo?usp=sharing)
-
 
 ```bash
 INPUT_FILE='msgs-pt_br.csv'
@@ -66,15 +64,3 @@ val_ids.tofile(os.path.join(os.path.dirname(__file__), 'val.bin'))
 
 Sete o parâmetro global `dataset = <set-dataset>` (mesmo do diretório `data/<seu-dataset>`), e os demais parâmetros do modelo de Karpathy de acordo com seus objetivos. Em seguida, apenas siga a sessão *Finetuning* em [main.ipynb](main.ipynb).  
 Veja que ao final compactamos e salvamos todo o `out_dir` do modelo no Google Drive, para que possamos recuperar este modelo posteriormente.
-
-## Inferência
-
-Escolha o arquivo compactado de `out_dir` com o modelo finetunado de interesse, descompacteo e faça as alterações dos parâmetros de Karpathy de acordo com seus objetivos. Siga a sessão *Inference* em [main.ipynb](main.ipynb), alterando a variável `start` com a sentença que você quer que seja entrada do seu modelo. Esta sessão também serializa o modelo de inferência em um arquivo pikle (`<pikle_model_filename>`), que pode ser utilizado num terminal interativo.
-
-Para executar terminal interativo de inferência [interview.py](interview.py), execute:
-
-```bash
-python interview.py <pikle_model_filename>
-```
-
-Você entra com a frase e ele realiza a inferência.
