@@ -5,20 +5,19 @@ GPT-2 pré-treinada pela OpenAI, disponibilizado por [Karpathy](https://github.c
 ## Instalação
 
 Siga o tutorial de instalação disponibilizado por [Karpathy](https://github.com/karpathy/nanoGPT?tab=readme-ov-file#install).  
-Utilizamos o Google Colab PRO para realizar o finetuning e inferência do modelo, em uma instância V100. Sugerimos que você faça o mesmo.  
-Para remoção dos erros de ortografia, instale Enelvo: `pip3 install enelvo`.
+Utilizamos o Google Colab PRO para realizar o finetuning e inferência do modelo, em uma instância V100. Sugerimos que você faça o mesmo.
 
 ## Preparação
 
-Procuramos seguir a mesma estrutura de diretórios do Karpathy. No diretório [data](data), há um script chamado [prepare.py](data/prepare.py) que lê grandes arquivos CSV contendo mensagens do Telegram com as colunas '`id', 'channel_id', 'date' e 'message'`. Este script divide aleatoriamente as mensagens em conjuntos de treinamento e teste na proporção de 10:1 e os salva em arquivos `${OUTPUT_PATH}/train.bin` e `${OUTPUT_PATH}/val.bin`.
+Procuramos seguir a mesma estrutura de diretórios do Karpathy. No diretório [data](data), há um script chamado [prepare.py](data/prepare.py) que lê grandes arquivos CSV contendo mensagens do Telegram com as colunas '`id', 'channel_id', 'date' e 'message'`. Este script divide sequencialmente as mensagens em conjuntos de treinamento e teste na proporção de 10:1 e os salva em arquivos `${OUTPUT_PATH}/train.bin` e `${OUTPUT_PATH}/val.bin`.
 
 As mensagens podem conter caracteres de formatação CSV, o que pode dificultar a leitura com métodos padrão. Para lidar com isso, há um script de pré-processamento adicional chamado [pre-prepare.pl](pre-prepare.pl). Ele coloca a última coluna das mensagens entre aspas duplas e remove quaisquer aspas duplas presentes nas mensagens.
 
-Durante o processo, foram utilizadas bibliotecas como **Enelvo** para normalizar o texto (corrigir erros de ortografia e linguagem típica da internet) e **tiktoken** para realizar a tokenização das mensagens. Durante a tokenização, nomes de usuários, URLs e caracteres especiais foram filtrados.
+Durante o processo, foi utilizada a biblioteca **tiktoken** para realizar a tokenização das mensagens. Durante a tokenização, nomes de usuários, URLs e caracteres especiais são filtrados.
 
 
 ```bash
-INPUT_FILE='msgs-pt_br.csv'
+INPUT_FILE='msgs-pt_br.csv' # or another csv file
 OUTPUT_PATH='data/telegram'
 
 data/pre-prepare.pl ${INPUT_FILE} # will save the new file as _${INPUT_FILE}
@@ -62,5 +61,64 @@ val_ids.tofile(os.path.join(os.path.dirname(__file__), 'val.bin'))
 
 ## Finetuning
 
-Sete o parâmetro global `dataset = <set-dataset>` (mesmo do diretório `data/<seu-dataset>`), e os demais parâmetros do modelo de Karpathy de acordo com seus objetivos. Em seguida, apenas siga a sessão *Finetuning* em [main.ipynb](main.ipynb).  
-Veja que ao final compactamos e salvamos todo o `out_dir` do modelo no Google Drive, para que possamos recuperar este modelo posteriormente.
+No arquivo [finetuning_nanoGPT.py](finetuning_nanoGPT.py), sete o parâmetro global `dataset = <set-dataset>` (mesmo nome do diretório `data/<seu-dataset>`), e os demais parâmetros do modelo de Karpathy de acordo com seus objetivos. Em seguida, basta executar este script python:
+
+```sh
+python3 finetuning_nanoGPT.py
+```
+
+A saída será algo como:
+
+```sh
+Overriding config with /tmp/tmpd8iei0tt:
+out_dir = "out"
+dataset = "telegram"
+eval_interval = 5
+eval_iters = 30
+init_from = "gpt2-xl"
+device = "cuda"
+always_save_checkpoint = False
+batch_size = 1
+gradient_accumulation_steps = 32
+max_iters = 30000
+learning_rate = 3e-05
+decay_lr = False
+
+tokens per iteration will be: 32,768
+Initializing from OpenAI GPT-2 weights: gpt2-xl
+loading weights from pretrained gpt: gpt2-xl
+forcing vocab_size=50257, block_size=1024, bias=True
+overriding dropout rate to 0.0
+number of parameters: 1555.97M
+num decayed parameter tensors: 194, with 1,556,609,600 parameters
+num non-decayed parameter tensors: 386, with 1,001,600 parameters
+using fused AdamW: True
+compiling the model... (takes a ~minute)
+```
+
+Em seguida, basta acompanhar as iterações!
+
+
+## Inferência
+
+No arquivo [inference_nanoGPT.py](inference_nanoGPT.py), ajuste os parâmetros do modelo de Karpathy de acordo com seus objetivos. Os principais são:
+
+```py
+init_from = 'gpt2-xl' # reither 'resume' (from an out_dir) or a gpt2 variant (e.g. 'gpt2', 'gpt2-medium', 'gpt2-large', 'gpt2-xl')
+out_dir = '' # ignored if init_from is not 'resume', same as defined in finetuning_nanoGPT.py
+num_samples = 3 # number of samples to draw
+max_new_tokens = 280 # number of tokens generated in each sample
+temperature = 1.0 # 1.0 = no change, < 1.0 = less random, > 1.0 = more random, in predictions
+```
+
+Vejam que para apenas uma frase, existe a string `start`, que será o ponto inicial para a geração do modelo. Como neste trabalho realizamos várias inferências, logo abaixo desta ferramenta há a geração iterativa dos prompts. Vale a pena brincar com estas gerações e parâmetros.
+
+```py
+start = "Vacinas adicionam um chip no corpo"
+```
+
+Em seguida, basta executar este script python:
+
+```sh
+python3 inference_nanoGPT.py
+```
